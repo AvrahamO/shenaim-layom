@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הדמיית צללים דינמית - בית המקדש</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #f9fafb;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(17, 24, 39, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            max-width: 320px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        input[type="date"] {
+            width: 100%;
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 8px;
+            color: #f9fafb;
+        }
+        #time-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 10px;
+            color: #e5e7eb;
+        }
+        canvas { 
+            display: block; 
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="info-panel">
+        <h1 class="text-2xl font-bold mb-4">בקרת תאורה</h1>
+        
+        <div>
+            <label for="date-picker">תאריך:</label>
+            <input type="date" id="date-picker">
+        </div>
+
+        <div class="mt-4">
+            <label for="time-slider">שעה:</label>
+            <input type="range" id="time-slider" min="0" max="24" step="0.1" value="12">
+            <div id="time-label">12:00</div>
+        </div>
+        
+        <div class="mt-6 text-sm text-gray-400">
+            <p>גרור את העכבר כדי לסובב את המצלמה.</p>
+            <p>השתמש בגלגלת כדי להתקרב ולהתרחק.</p>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- 1. הגדרות בסיסיות ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // צבע שמיים
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(70, 60, 100); // מיקום התחלתי משופר של המצלמה
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. הפעלת הצללים (החלק החשוב!) ---
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // סוג הצללים לקבלת קצוות רכים
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 10, 0); // מיקוד המצלמה על מרכז המודל
+
+        // --- 3. יצירת האובייקטים בסצנה ---
+
+        // קרקע (מקבלת צל)
+        const groundGeometry = new THREE.PlaneGeometry(300, 300);
+        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x999999, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2; // לסובב את המשטח שיהיה אופקי
+        ground.receiveShadow = true; // חשוב: הקרקע מקבלת צללים
+        scene.add(ground);
+
+        // --- יצירת מודל בית המקדש ---
+        const templeGroup = new THREE.Group();
+        scene.add(templeGroup);
+
+        const heichalMaterial = new THREE.MeshStandardMaterial({ color: 0xfff8dc }); // צבע אבן ירושלמית בהירה
+        const mizbeachMaterial = new THREE.MeshStandardMaterial({ color: 0xaf8f6d }); // צבע אבן כהה יותר
+
+        // מבנה ההיכל
+        const heichal = new THREE.Mesh(
+            new THREE.BoxGeometry(50, 50, 50),
+            heichalMaterial
+        );
+        heichal.position.set(0, 25, -30);
+        heichal.castShadow = true;
+        heichal.receiveShadow = true;
+        templeGroup.add(heichal);
+
+        // מדרגות ההיכל
+        const numSteps = 12;
+        const stepHeight = 0.8;
+        const stepDepth = 1.2;
+        const stepWidth = 22;
+        const heichalFrontZ = heichal.position.z + 25; // החזית של ההיכל
+
+        for (let i = 0; i < numSteps; i++) {
+            const step = new THREE.Mesh(
+                new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth),
+                heichalMaterial
+            );
+            step.castShadow = true;
+            step.receiveShadow = true;
+            step.position.set(
+                0,
+                (i * stepHeight) + (stepHeight / 2),
+                heichalFrontZ + (i * stepDepth) + (stepDepth / 2)
+            );
+            templeGroup.add(step);
+        }
+
+        // המזבח
+        const mizbeach = new THREE.Mesh(
+            new THREE.BoxGeometry(25, 15, 25),
+            mizbeachMaterial
+        );
+        mizbeach.position.set(0, 7.5, 40);
+        mizbeach.castShadow = true;
+        mizbeach.receiveShadow = true;
+        templeGroup.add(mizbeach);
+
+        // הכבש
+        const rampLength = 35;
+        const rampHeight = 15;
+        const kevesh = new THREE.Mesh(
+            new THREE.BoxGeometry(15, 1, rampLength), // width, thickness, length
+            mizbeachMaterial
+        );
+        kevesh.castShadow = true;
+        kevesh.receiveShadow = true;
+        // מיקום וסיבוב הכבש כך שיתחבר לקרקע ולמזבח
+        kevesh.position.set(
+            0,
+            rampHeight / 2, // מרכז הגובה
+            mizbeach.position.z - (25 / 2) - (rampLength / 2) // מרכז האורך
+        );
+        kevesh.rotation.x = Math.atan2(rampHeight, rampLength);
+        templeGroup.add(kevesh);
+
+
+        // --- 4. הגדרת תאורה ---
+
+        // אור סביבה (מוסיף תאורה כללית ומונע אזורים שחורים לחלוטין)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        // אור שמש (אור כיווני שמטיל צל)
+        const sunLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        sunLight.position.set(50, 80, 30); // מיקום התחלתי
+        sunLight.castShadow = true; // חשוב: האור הזה מטיל צל
+        scene.add(sunLight);
+
+        // הגדרות איכות הצל (אופציונלי אך מומלץ)
+        sunLight.shadow.mapSize.width = 4096;
+        sunLight.shadow.mapSize.height = 4096;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
+        // הגדרת גבולות "מצלמת הצל" כך שתכסה את כל האזור הרלוונטי
+        const shadowCameraSize = 120;
+        sunLight.shadow.camera.left = -shadowCameraSize;
+        sunLight.shadow.camera.right = shadowCameraSize;
+        sunLight.shadow.camera.top = shadowCameraSize;
+        sunLight.shadow.camera.bottom = -shadowCameraSize;
+
+        // --- 5. לוגיקת עדכון השמש וה-UI ---
+        const datePicker = document.getElementById('date-picker');
+        const timeSlider = document.getElementById('time-slider');
+        const timeLabel = document.getElementById('time-label');
+
+        // הגדרת תאריך התחלתי להיום
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const dd = String(today.getDate()).padStart(2, '0');
+        datePicker.value = `${yyyy}-${mm}-${dd}`;
+
+        function updateSunPosition() {
+            const time = parseFloat(timeSlider.value); // ערך בין 0 ל-24
+            const date = new Date(datePicker.value);
+
+            // עדכון תצוגת השעה
+            const hours = Math.floor(time);
+            const minutes = Math.floor((time - hours) * 60);
+            timeLabel.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+            // --- כאן יש לממש את הלוגיקה המדויקת שלך לחישוב זווית השמש ---
+            // לצורך הדגמה, נשתמש בחישוב פשוט:
+            const timeAngle = (time / 24 - 0.5) * Math.PI;
+            const dayOfYear = (date - new Date(date.getFullYear(), 0, 0)) / 86400000;
+            const seasonalFactor = Math.cos((dayOfYear / 365.25) * 2 * Math.PI - Math.PI) * 0.3 + 0.7;
+            const sunDistance = 150;
+            
+            sunLight.position.x = sunDistance * Math.cos(timeAngle);
+            sunLight.position.y = sunDistance * Math.sin(timeAngle) * seasonalFactor;
+            sunLight.position.z = sunDistance * Math.cos(timeAngle) * 0.5; // הטיה קלה לדרום
+
+            if (sunLight.position.y < 5) { // השארת מעט אור גם בזריחה/שקיעה
+                sunLight.intensity = sunLight.position.y / 5 * 2.0;
+                if (sunLight.position.y <= 0) sunLight.intensity = 0;
+            } else {
+                sunLight.intensity = 2.0;
+            }
+
+            sunLight.target.position.set(0, 0, 0);
+            scene.add(sunLight.target);
+        }
+
+        datePicker.addEventListener('input', updateSunPosition);
+        timeSlider.addEventListener('input', updateSunPosition);
+
+        updateSunPosition();
+
+        // --- 6. לולאת אנימציה ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // נדרש עבור 'enableDamping'
+            renderer.render(scene, camera);
+        }
+
+        // התאמת גודל החלון
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הדמיית צללים דינמית</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background-color: #111827;
+      color: #f9fafb;
+    }
+
+    #info-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(17, 24, 39, 0.8);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(55, 65, 81, 0.5);
+      max-width: 320px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #9ca3af;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      background-color: #374151;
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      padding: 8px;
+      color: #f9fafb;
+    }
+
+    #time-label {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
+      color: #e5e7eb;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <div id="info-panel">
+    <!-- <h1 class="text-2xl font-bold mb-4">בקרת תאורה</h1> -->
+
+    <div>
+      <!-- <label for="date-picker">תאריך:</label> -->
+      <input type="date" id="date-picker">
+    </div>
+
+    <div class="mt-4">
+      <!-- <label for="time-slider">שעה:</label> -->
+      <input hidden type="range" id="time-slider" min="0" max="24" step="0.1" value="12">
+      <label>שמונה ומחצה לפי שעון מקומי</label>
+      <div id="time-label">12:00</div>
+    </div>
+
+    <!-- <div class="mt-6 text-sm text-gray-400">
+      <p>גרור את העכבר כדי לסובב את המצלמה.</p>
+      <p>השתמש בגלגלת כדי להתקרב ולהתרחק.</p>
+    </div> -->
+  </div>
+
+  <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { Observer, Equator, Horizon, Body, SearchRiseSet } from 'https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/+esm'
+
+    const obsv = new Observer(31.778, 35.2355, 750);
+
+    // --- 1. הגדרות בסיסיות ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb); // צבע שמיים
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+    camera.position.set(-80, 220, 15); // מיקום התחלתי של המצלמה
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // --- 2. הפעלת הצללים (החלק החשוב!) ---
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // סוג הצללים לקבלת קצוות רכים
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // --- 3. יצירת האובייקטים בסצנה ---
+
+    // קרקע (מקבלת צל)
+    const groundGeometry = new THREE.PlaneGeometry(200, 300);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x999999, side: THREE.DoubleSide });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2; // לסובב את המשטח שיהיה אופקי
+    ground.receiveShadow = true; // חשוב: הקרקע מקבלת צללים
+    scene.add(ground);
+
+    // מבנים (מטילים צל)
+    const buildings = [
+      { x: 0, z: -15, h: 100, w: 100, d: 30 }, // האולם
+      { x: 0, z: -65, h: 100, w: 70, d: 70 }, // ההיכל
+
+      // מדרגות ההיכל
+      { x: 0, z: 2, h: 6, w: 20, d: 4 },
+      { x: 0, z: 2.5, h: 5.5, w: 22, d: 5 },
+      { x: 0, z: 3, h: 5, w: 24, d: 6 },
+      { x: 0, z: 4.5, h: 4.5, w: 26, d: 9 },
+      { x: 0, z: 5, h: 4, w: 28, d: 10 },
+      { x: 0, z: 5.5, h: 3.5, w: 30, d: 11 },
+      { x: 0, z: 7, h: 3, w: 32, d: 14 },
+      { x: 0, z: 7.5, h: 2.5, w: 34, d: 15 },
+      { x: 0, z: 8, h: 2, w: 36, d: 16 },
+      { x: 0, z: 9.5, h: 1.5, w: 38, d: 19 },
+      { x: 0, z: 10, h: 1, w: 40, d: 20 },
+      { x: 0, z: 10.5, h: 0.5, w: 42, d: 21 },
+
+      // המזבח
+      { x: -8 + 15, z: 38, h: 1, w: 2, d: 32 },
+      { x: -8 + 0, z: 53, h: 1, w: 32, d: 2 },
+      { x: -8 + 0, z: 38, h: 6, w: 30, d: 30 },
+      { x: -8 + 0, z: 38, h: 9, w: 28, d: 28 },
+      { x: -8 + 13.5, z: 24.5, h: 10, w: 1, d: 1 },
+      { x: -8 + -13.5, z: 24.5, h: 10, w: 1, d: 1 },
+      { x: -8 + 13.5, z: 51.5, h: 10, w: 1, d: 1 },
+      { x: -8 + -13.5, z: 51.5, h: 10, w: 1, d: 1 },
+
+      // חומות העזרה
+      { x: -68.5, z: -17.5, h: 23, w: 2, d: 187 },
+      { x: 68.5, z: -17.5, h: 23, w: 2, d: 187 },
+      { x: 0, z: 77, h: 23, w: 135+4, d: 2 },
+      { x: 0, z: -112, h: 23, w: 135+4, d: 2 },
+    ];
+
+    const buildingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+    buildings.forEach(b => {
+      const buildingGeometry = new THREE.BoxGeometry(b.w, b.h, b.d);
+      const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+      building.position.set(b.x, b.h / 2, b.z); // המיקום הוא מרכז הקוביה, לכן גובה y הוא חצי גובה
+      building.castShadow = true; // חשוב: המבנה מטיל צל
+      building.receiveShadow = true; // מבנים יכולים לקבל צל ממבנים אחרים
+      scene.add(building);
+    });
+
+    // הכבש
+    const wedgeGeometry = new THREE.BoxGeometry(32, 18, 16);
+    const pos = wedgeGeometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      if (pos.getX(i) < 0 && pos.getY(i) > 0) pos.setY(i, 0); // change Y-coord by condition
+      if (pos.getY(i) < 0) pos.setY(i, 0)
+    }
+
+    wedgeGeometry.computeVertexNormals(); // don't forget to re-compute normals
+    const wedge = new THREE.Mesh(wedgeGeometry, buildingMaterial);
+    wedge.position.set(-38, 0, 38);
+    wedge.castShadow = true;
+    wedge.receiveShadow = true;
+    scene.add(wedge);
+
+    // הטבעות
+    // const gridHelper = new THREE.GridHelper(20, 6, 0x000000, 0x444444);
+    // gridHelper.position.y = 0.01; // הגבהה קלה למניעת "מלחמה" עם משטח הקרקע
+    // gridHelper.position.z = 38
+    // gridHelper.position.x = 20
+    // scene.add(gridHelper);
+
+    const material = new THREE.LineBasicMaterial({
+      color: 0x0000ff,
+    });
+
+    const points = [];
+    points.push(new THREE.Vector3(16, .1, 22));
+    points.push(new THREE.Vector3(16+24, .1, 22));
+    points.push(new THREE.Vector3(16+24, .1, 22+32));
+    points.push(new THREE.Vector3(16, .1, 22+32));
+    points.push(new THREE.Vector3(16, .1, 22));
+    points.push(new THREE.Vector3(16+6, .1, 22));
+    points.push(new THREE.Vector3(16+6, .1, 22+32));
+    points.push(new THREE.Vector3(16+12, .1, 22+32));
+    points.push(new THREE.Vector3(16+12, .1, 22));
+    points.push(new THREE.Vector3(16+18, .1, 22));
+    points.push(new THREE.Vector3(16+18, .1, 22+32));
+    points.push(new THREE.Vector3(16+24, .1, 22+32));
+    points.push(new THREE.Vector3(16+24, .1, 22+32*5/6));
+    points.push(new THREE.Vector3(16, .1, 22+32*5/6));
+    points.push(new THREE.Vector3(16, .1, 22+32*4/6));
+    points.push(new THREE.Vector3(16+24, .1, 22+32*4/6));
+    points.push(new THREE.Vector3(16+24, .1, 22+32*3/6));
+    points.push(new THREE.Vector3(16, .1, 22+32*3/6));
+    points.push(new THREE.Vector3(16, .1, 22+32*2/6));
+    points.push(new THREE.Vector3(16+24, .1, 22+32*2/6));
+    points.push(new THREE.Vector3(16+24, .1, 22+32*1/6));
+    points.push(new THREE.Vector3(16, .1, 22+32*1/6));
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+
+
+
+    // --- 4. הגדרת תאורה ---
+
+    const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x999999, 0.9);
+    scene.add(hemisphereLight);
+
+    // אור שמש (אור כיווני שמטיל צל)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    sunLight.position.set(50, 80, 30); // מיקום התחלתי
+    sunLight.castShadow = true; // חשוב: האור הזה מטיל צל
+    scene.add(sunLight);
+
+    // הגדרות איכות הצל (אופציונלי אך מומלץ)
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 500;
+    // הגדרת גבולות "מצלמת הצל" כך שתכסה את כל האזור הרלוונטי
+    const shadowCameraSize = 100;
+    sunLight.shadow.camera.left = -shadowCameraSize;
+    sunLight.shadow.camera.right = shadowCameraSize;
+    sunLight.shadow.camera.top = shadowCameraSize;
+    sunLight.shadow.camera.bottom = -shadowCameraSize;
+
+    // --- 5. לוגיקת עדכון השמש וה-UI ---
+    const datePicker = document.getElementById('date-picker');
+    const timeSlider = document.getElementById('time-slider');
+    const timeLabel = document.getElementById('time-label');
+
+    // הגדרת תאריך התחלתי להיום
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const dd = String(today.getDate()).padStart(2, '0');
+    datePicker.value = `${yyyy}-${mm}-${dd}`;
+    datePicker.value = `2025-06-21`;
+
+    setTimeout(() => {
+      setInterval(() => {
+        const date = new Date(datePicker.value);
+        date.setDate(date.getDate() + 1);
+        datePicker.value = date.toISOString().slice(0,10);
+        updateSunPosition();
+      }, 100);
+    }, 5000);
+
+    function updateSunPosition() {
+      const time = parseFloat(timeSlider.value); // ערך בין 0 ל-24
+      const date = new Date(datePicker.value);
+
+      const sunrise = SearchRiseSet(Body.Sun, obsv, +1, date, 1);
+      const sunset = SearchRiseSet(Body.Sun, obsv, -1, date, 1);
+      const dayLength = sunset.date - sunrise.date;
+      const hour8half = dayLength * 8.5/12 + sunrise.date.getTime();
+
+      date.setTime(hour8half);
+
+      // עדכון תצוגת השעה
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      timeLabel.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+      // date.setHours(hours, minutes, 0, 0);
+      const equator = Equator(Body.Sun, date, obsv, true, true);
+      const horizon = Horizon(date, obsv, equator.ra, equator.dec, 'normal');
+
+      // --- כאן יש לממש את הלוגיקה המדויקת שלך לחישוב זווית השמש ---
+      // לצורך הדגמה, נשתמש בחישוב פשוט:
+      // השמש נעה במעגל סביב מרכז הסצנה (0,0,0)
+
+      // זווית המבוססת על השעה ביום (מ-זריחה לשקיעה)
+      const timeAngle = (time / 24 - 0.5) * Math.PI; // ממפה 0-24 ל (-PI/2) עד (PI/2)
+
+      // "גובה" השמש בשמיים, מושפע מעט מהתאריך (סימולציה פשוטה של עונות השנה)
+      const dayOfYear = (date - new Date(date.getFullYear(), 0, 0)) / 86400000;
+      const seasonalFactor = Math.cos((dayOfYear / 365.25) * 2 * Math.PI - Math.PI) * 0.3 + 0.7; // ערך בין 0.4 ל-1.0
+
+      const sunDistance = 150; // מרחק השמש ממרכז הסצנה
+
+      // sunLight.position.x = sunDistance * Math.cos(timeAngle);
+      // sunLight.position.y = sunDistance * Math.sin(timeAngle) * seasonalFactor;
+      // sunLight.position.z = sunDistance * Math.cos(timeAngle) * 0.5; // הטיה קלה לדרום
+
+      sunLight.position.x = sunDistance * Math.sin((horizon.azimuth + 90) * Math.PI / 180);
+      sunLight.position.y = sunDistance * Math.sin(horizon.altitude * Math.PI / 180);
+      sunLight.position.z = sunDistance * Math.sin(horizon.azimuth * Math.PI / 180);
+
+      // וודא שהשמש לא יורדת מתחת לאופק, כי אז אין תאורה כיוונית
+      if (sunLight.position.y < 0) {
+        sunLight.position.y = 0;
+        sunLight.intensity = 0; // כיבוי האור בלילה
+      } else {
+        sunLight.intensity = 2.5;
+      }
+
+      // עדכון מיקום המטרה של האור (תמיד במרכז)
+      sunLight.target.position.set(0, 0, 0);
+      scene.add(sunLight.target);
+    }
+
+    datePicker.addEventListener('input', updateSunPosition);
+    timeSlider.addEventListener('input', updateSunPosition);
+
+    // קריאה ראשונית כדי למקם את השמש
+    updateSunPosition();
+
+    // --- 6. לולאת אנימציה ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update(); // נדרש עבור 'enableDamping'
+      renderer.render(scene, camera);
+    }
+
+    // התאמת גודל החלון
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+
+  </script>
+</body>
+
+</html>
