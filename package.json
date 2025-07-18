@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "vite",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "astronomy-engine": "^2.1.19",
     "three": "^0.178.0"
   },
   "devDependencies": {

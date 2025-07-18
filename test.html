@@ -102,7 +102,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { Observer, Equator, Horizon, Body, SearchRiseSet } from 'https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/+esm'
 
-    const obsv = new Observer(31.778, 35.2355, 750);
+    const obsv = new Observer(31.7781, 35.2355, 750);
 
     // --- 1. הגדרות בסיסיות ---
     const scene = new THREE.Scene();
@@ -164,8 +164,17 @@
       // חומות העזרה
       { x: -68.5, z: -17.5, h: 23, w: 2, d: 187 },
       { x: 68.5, z: -17.5, h: 23, w: 2, d: 187 },
-      { x: 0, z: 77, h: 23, w: 135+4, d: 2 },
-      { x: 0, z: -112, h: 23, w: 135+4, d: 2 },
+      { x: 0, z: 77, h: 23, w: 135 + 4, d: 2 },
+      { x: 0, z: -112, h: 23, w: 135 + 4, d: 2 },
+
+      // { x: -10 + 16.5, z: 51.5, h: 9, w: 1, d: 1 },
+      // { x: -10 + 17.5, z: 51.5, h: 8, w: 1, d: 1 },
+      // { x: -10 + 18.5, z: 51.5, h: 7, w: 1, d: 1 },
+      // { x: -10 + 19.5, z: 51.5, h: 6, w: 1, d: 1 },
+      // { x: -10 + 20.5, z: 51.5, h: 5, w: 1, d: 1 },
+      // { x: -10 + 21.5, z: 51.5, h: 4, w: 1, d: 1 },
+      // { x: -10 + 22.5, z: 51.5, h: 3, w: 1, d: 1 },
+      // { x: -10 + 23.5, z: 51.5, h: 2, w: 1, d: 1 },
     ];
 
     const buildingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
@@ -206,27 +215,27 @@
 
     const points = [];
     points.push(new THREE.Vector3(16, .1, 22));
-    points.push(new THREE.Vector3(16+24, .1, 22));
-    points.push(new THREE.Vector3(16+24, .1, 22+32));
-    points.push(new THREE.Vector3(16, .1, 22+32));
+    points.push(new THREE.Vector3(16 + 24, .1, 22));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32));
+    points.push(new THREE.Vector3(16, .1, 22 + 32));
     points.push(new THREE.Vector3(16, .1, 22));
-    points.push(new THREE.Vector3(16+6, .1, 22));
-    points.push(new THREE.Vector3(16+6, .1, 22+32));
-    points.push(new THREE.Vector3(16+12, .1, 22+32));
-    points.push(new THREE.Vector3(16+12, .1, 22));
-    points.push(new THREE.Vector3(16+18, .1, 22));
-    points.push(new THREE.Vector3(16+18, .1, 22+32));
-    points.push(new THREE.Vector3(16+24, .1, 22+32));
-    points.push(new THREE.Vector3(16+24, .1, 22+32*5/6));
-    points.push(new THREE.Vector3(16, .1, 22+32*5/6));
-    points.push(new THREE.Vector3(16, .1, 22+32*4/6));
-    points.push(new THREE.Vector3(16+24, .1, 22+32*4/6));
-    points.push(new THREE.Vector3(16+24, .1, 22+32*3/6));
-    points.push(new THREE.Vector3(16, .1, 22+32*3/6));
-    points.push(new THREE.Vector3(16, .1, 22+32*2/6));
-    points.push(new THREE.Vector3(16+24, .1, 22+32*2/6));
-    points.push(new THREE.Vector3(16+24, .1, 22+32*1/6));
-    points.push(new THREE.Vector3(16, .1, 22+32*1/6));
+    points.push(new THREE.Vector3(16 + 6, .1, 22));
+    points.push(new THREE.Vector3(16 + 6, .1, 22 + 32));
+    points.push(new THREE.Vector3(16 + 12, .1, 22 + 32));
+    points.push(new THREE.Vector3(16 + 12, .1, 22));
+    points.push(new THREE.Vector3(16 + 18, .1, 22));
+    points.push(new THREE.Vector3(16 + 18, .1, 22 + 32));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32 * 5 / 6));
+    points.push(new THREE.Vector3(16, .1, 22 + 32 * 5 / 6));
+    points.push(new THREE.Vector3(16, .1, 22 + 32 * 4 / 6));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32 * 4 / 6));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32 * 3 / 6));
+    points.push(new THREE.Vector3(16, .1, 22 + 32 * 3 / 6));
+    points.push(new THREE.Vector3(16, .1, 22 + 32 * 2 / 6));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32 * 2 / 6));
+    points.push(new THREE.Vector3(16 + 24, .1, 22 + 32 * 1 / 6));
+    points.push(new THREE.Vector3(16, .1, 22 + 32 * 1 / 6));
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
@@ -269,16 +278,16 @@
     const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
     const dd = String(today.getDate()).padStart(2, '0');
     datePicker.value = `${yyyy}-${mm}-${dd}`;
-    datePicker.value = `2025-06-21`;
+    datePicker.value = `2025-12-21`;
 
-    setTimeout(() => {
-      setInterval(() => {
-        const date = new Date(datePicker.value);
-        date.setDate(date.getDate() + 1);
-        datePicker.value = date.toISOString().slice(0,10);
-        updateSunPosition();
-      }, 100);
-    }, 5000);
+    // setTimeout(() => {
+    //   setInterval(() => {
+    //     const date = new Date(datePicker.value);
+    //     date.setDate(date.getDate() + 1);
+    //     datePicker.value = date.toISOString().slice(0,10);
+    //     updateSunPosition();
+    //   }, 100);
+    // }, 5000);
 
     function updateSunPosition() {
       const time = parseFloat(timeSlider.value); // ערך בין 0 ל-24
@@ -287,7 +296,7 @@
       const sunrise = SearchRiseSet(Body.Sun, obsv, +1, date, 1);
       const sunset = SearchRiseSet(Body.Sun, obsv, -1, date, 1);
       const dayLength = sunset.date - sunrise.date;
-      const hour8half = dayLength * 8.5/12 + sunrise.date.getTime();
+      const hour8half = dayLength * 8.5 / 12 + sunrise.date.getTime();
 
       date.setTime(hour8half);
 
@@ -313,13 +322,44 @@
 
       const sunDistance = 150; // מרחק השמש ממרכז הסצנה
 
-      // sunLight.position.x = sunDistance * Math.cos(timeAngle);
-      // sunLight.position.y = sunDistance * Math.sin(timeAngle) * seasonalFactor;
-      // sunLight.position.z = sunDistance * Math.cos(timeAngle) * 0.5; // הטיה קלה לדרום
+      function setSunPositionFromAzimuthAltitude(azimuth, altitude, distance) {
+        // ודא שהשמש מעל האופק
+        if (altitude < 0) {
+          sunLight.intensity = 0;
+          return;
+        } else {
+          sunLight.intensity = 2.0; // או כל ערך אחר שתרצה
+        }
 
-      sunLight.position.x = sunDistance * Math.sin((horizon.azimuth + 90) * Math.PI / 180);
-      sunLight.position.y = sunDistance * Math.sin(horizon.altitude * Math.PI / 180);
-      sunLight.position.z = sunDistance * Math.sin(horizon.azimuth * Math.PI / 180);
+        // המרת הזוויות לרדיאנים לצורך חישובים טריגונומטריים
+        const azimuthRad = THREE.MathUtils.degToRad(azimuth);
+        const altitudeRad = THREE.MathUtils.degToRad(altitude);
+
+        // חישוב הקואורדינטות
+        // y הוא הגובה, מחושב ישירות מה-altitude
+        const y = distance * Math.sin(altitudeRad);
+
+        // רדיוס ההיטל של השמש על מישור הקרקע (XZ)
+        const projectedRadius = distance * Math.cos(altitudeRad);
+
+        // חישוב x ו-z על בסיס ה-azimuth
+        // x מיוצג על ידי sin (ציר מזרח-מערב)
+        // z מיוצג על ידי -cos (ציר צפון-דרום, כאשר צפון הוא בכיוון z שלילי)
+        const x = projectedRadius * Math.sin(azimuthRad);
+        const z = projectedRadius * -Math.cos(azimuthRad);
+
+        // עדכון מיקום האור
+        sunLight.position.set(x, y, z);
+
+        // ודא שהאור תמיד "מסתכל" על מרכז הסצנה
+        sunLight.target.position.set(0, 0, 0);
+      }
+
+      // sunLight.position.x = sunDistance * Math.sin((horizon.azimuth + 90) * Math.PI / 180);
+      // sunLight.position.y = sunDistance * Math.sin(horizon.altitude * Math.PI / 180);
+      // sunLight.position.z = sunDistance * Math.sin(horizon.azimuth * Math.PI / 180);
+      setSunPositionFromAzimuthAltitude(horizon.azimuth+90, horizon.altitude, sunDistance);
+      console.log(sunLight.position)
 
       // וודא שהשמש לא יורדת מתחת לאופק, כי אז אין תאורה כיוונית
       if (sunLight.position.y < 0) {
