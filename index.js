@@ -112,34 +112,33 @@ const material = new THREE.LineBasicMaterial({
 });
 
 const points = [
-  new THREE.Vector3(16, .1, 22),
-  new THREE.Vector3(16 + 24, .1, 22),
-  new THREE.Vector3(16 + 24, .1, 22 + 32),
-  new THREE.Vector3(16, .1, 22 + 32),
-  new THREE.Vector3(16, .1, 22),
-  new THREE.Vector3(16 + 6, .1, 22),
-  new THREE.Vector3(16 + 6, .1, 22 + 32),
-  new THREE.Vector3(16 + 12, .1, 22 + 32),
-  new THREE.Vector3(16 + 12, .1, 22),
-  new THREE.Vector3(16 + 18, .1, 22),
-  new THREE.Vector3(16 + 18, .1, 22 + 32),
-  new THREE.Vector3(16 + 24, .1, 22 + 32),
-  new THREE.Vector3(16 + 24, .1, 22 + 32 * 5 / 6),
-  new THREE.Vector3(16, .1, 22 + 32 * 5 / 6),
-  new THREE.Vector3(16, .1, 22 + 32 * 4 / 6),
-  new THREE.Vector3(16 + 24, .1, 22 + 32 * 4 / 6),
-  new THREE.Vector3(16 + 24, .1, 22 + 32 * 3 / 6),
-  new THREE.Vector3(16, .1, 22 + 32 * 3 / 6),
-  new THREE.Vector3(16, .1, 22 + 32 * 2 / 6),
-  new THREE.Vector3(16 + 24, .1, 22 + 32 * 2 / 6),
-  new THREE.Vector3(16 + 24, .1, 22 + 32 * 1 / 6),
-  new THREE.Vector3(16, .1, 22 + 32 * 1 / 6),
+  new THREE.Vector3(0, .1, 0),
+  new THREE.Vector3(24, .1, 0),
+  new THREE.Vector3(24, .1, 32),
+  new THREE.Vector3(0, .1, 32),
+  new THREE.Vector3(0, .1, 0),
+  new THREE.Vector3(6, .1, 0),
+  new THREE.Vector3(6, .1, 32),
+  new THREE.Vector3(12, .1, 32),
+  new THREE.Vector3(12, .1, 0),
+  new THREE.Vector3(18, .1, 0),
+  new THREE.Vector3(18, .1, 32),
+  new THREE.Vector3(24, .1, 32),
+  new THREE.Vector3(24, .1, 32 * 5 / 6),
+  new THREE.Vector3(0, .1, 32 * 5 / 6),
+  new THREE.Vector3(0, .1, 32 * 4 / 6),
+  new THREE.Vector3(24, .1, 32 * 4 / 6),
+  new THREE.Vector3(24, .1, 32 * 3 / 6),
+  new THREE.Vector3(0, .1, 32 * 3 / 6),
+  new THREE.Vector3(0, .1, 32 * 2 / 6),
+  new THREE.Vector3(24, .1, 32 * 2 / 6),
+  new THREE.Vector3(24, .1, 32 * 1 / 6),
+  new THREE.Vector3(0, .1, 32 * 1 / 6),
 ];
 
-const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-const line = new THREE.Line(geometry, material);
-scene.add(line);
+const ringsGeometry = new THREE.BufferGeometry().setFromPoints(points);
+const rings = new THREE.Line(ringsGeometry, material);
+scene.add(rings);
 
 
 
@@ -167,6 +166,7 @@ sunLight.shadow.camera.bottom = -shadowCameraSize;
 // --- 5. updating sun and UI ---
 const datePicker = document.getElementById('date-picker');
 const timeSlider = document.getElementById('time-slider');
+const ringsControl = document.getElementById('rings-control');
 const timeLabel = document.getElementById('time-label');
 const hourLabel = document.getElementById('hour-label');
 
@@ -189,7 +189,6 @@ function updateSunPosition() {
 
   const equator = ASTRO.Equator(ASTRO.Body.Sun, date, obsv, true, true);
   const horizon = ASTRO.Horizon(date, obsv, equator.ra, equator.dec, 'normal');
-  console.log(horizon.azimuth, horizon.altitude, time)
 
   const sunDistance = 150;
 
@@ -217,10 +216,28 @@ function updateSunPosition() {
   scene.add(sunLight.target);
 }
 
+function setRings(checked) {
+  if (checked) {
+    rings.rotation.y = -Math.PI / 2;
+    rings.scale.x = 32 / 24;
+    rings.scale.z = 24 / 32;
+    rings.position.x = 40;
+    rings.position.z = 22;
+  } else {
+    rings.rotation.y = 0;
+    rings.scale.x = 1;
+    rings.scale.z = 1;
+    rings.position.x = 16;
+    rings.position.z = 22;
+  }
+}
+
 datePicker.addEventListener('input', updateSunPosition);
 timeSlider.addEventListener('input', updateSunPosition);
+ringsControl.addEventListener('change', (e) => setRings(e.target.checked));
 
 updateSunPosition();
+setRings()
 
 // --- 6. Animation loop ---
 function animate() {
