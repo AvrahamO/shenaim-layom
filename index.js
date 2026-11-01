@@ -39,8 +39,8 @@ scene.add(ground);
 // Buildings
 const buildings = [
   // האולם
-  { x: 0, z: -15, h: 54, w: 100, d: 30 },
-  { x: 0, z: -15, h: 100, w: 50, d: 30 },
+  { x: 0, z: -15, h: 51, w: 100, d: 30 },
+  { x: 0, z: -15, h: 100, w: 100, d: 30 },
 
   // ההיכל
   { x: 0, z: -65, h: 51, w: 70, d: 70 },
@@ -78,6 +78,7 @@ const buildings = [
 ];
 
 const buildingMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+const buildingMeshes = [];
 buildings.forEach(b => {
   const buildingGeometry = new THREE.BoxGeometry(b.w, b.h, b.d);
   const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
@@ -85,6 +86,7 @@ buildings.forEach(b => {
   building.castShadow = true;
   building.receiveShadow = true;
   scene.add(building);
+  buildingMeshes.push(building);
 });
 
 // הכבש
@@ -172,10 +174,51 @@ sunLight.shadow.camera.bottom = -shadowCameraSize;
 const datePicker = document.getElementById('date-picker');
 const timeSlider = document.getElementById('time-slider');
 const ringsControl = document.getElementById('rings-control');
+const buildingValueControl = document.getElementById('building-value-control');
+const buildingWidthControl = document.getElementById('building-width-control');
+const courtyardWallHeightControl = document.getElementById('courtyard-wall-height-control');
 const timeLabel = document.getElementById('time-label');
 const hourLabel = document.getElementById('hour-label');
+buildingValueControl.value = buildings[0].h;
+buildingWidthControl.value = buildings[1].w;
+courtyardWallHeightControl.value = buildings[24].h;
 
-datePicker.value = `2025-12-21`;
+buildingValueControl.addEventListener('input', () => {
+  const height = buildingValueControl.valueAsNumber;
+  if (!Number.isFinite(height) || height < 0) return;
+
+  buildings[0].h = height;
+  buildingMeshes[0].geometry.dispose();
+  buildingMeshes[0].geometry = new THREE.BoxGeometry(buildings[0].w, height, buildings[0].d);
+  buildingMeshes[0].position.y = height / 2;
+});
+
+buildingWidthControl.addEventListener('input', () => {
+  const width = buildingWidthControl.valueAsNumber;
+  if (!Number.isFinite(width) || width < 0) return;
+
+  buildings[1].w = width;
+  buildingMeshes[1].geometry.dispose();
+  buildingMeshes[1].geometry = new THREE.BoxGeometry(width, buildings[1].h, buildings[1].d);
+});
+
+courtyardWallHeightControl.addEventListener('input', () => {
+  const height = courtyardWallHeightControl.valueAsNumber;
+  if (!Number.isFinite(height) || height < 0) return;
+
+  for (let index = 24; index <= 27; index++) {
+    buildings[index].h = height;
+    buildingMeshes[index].geometry.dispose();
+    buildingMeshes[index].geometry = new THREE.BoxGeometry(
+      buildings[index].w,
+      height,
+      buildings[index].d
+    );
+    buildingMeshes[index].position.y = height / 2;
+  }
+});
+
+datePicker.value = `2026-12-21`;
 
 function updateSunPosition() {
   const time = parseFloat(timeSlider.value);
