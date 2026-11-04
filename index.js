@@ -176,12 +176,10 @@ const timeSlider = document.getElementById('time-slider');
 const ringsControl = document.getElementById('rings-control');
 const buildingValueControl = document.getElementById('building-value-control');
 const buildingWidthControl = document.getElementById('building-width-control');
-const courtyardWallHeightControl = document.getElementById('courtyard-wall-height-control');
 const timeLabel = document.getElementById('time-label');
 const hourLabel = document.getElementById('hour-label');
 buildingValueControl.value = buildings[0].h;
 buildingWidthControl.value = buildings[1].w;
-courtyardWallHeightControl.value = buildings[24].h;
 
 buildingValueControl.addEventListener('input', () => {
   const height = buildingValueControl.valueAsNumber;
@@ -200,22 +198,6 @@ buildingWidthControl.addEventListener('input', () => {
   buildings[1].w = width;
   buildingMeshes[1].geometry.dispose();
   buildingMeshes[1].geometry = new THREE.BoxGeometry(width, buildings[1].h, buildings[1].d);
-});
-
-courtyardWallHeightControl.addEventListener('input', () => {
-  const height = courtyardWallHeightControl.valueAsNumber;
-  if (!Number.isFinite(height) || height < 0) return;
-
-  for (let index = 24; index <= 27; index++) {
-    buildings[index].h = height;
-    buildingMeshes[index].geometry.dispose();
-    buildingMeshes[index].geometry = new THREE.BoxGeometry(
-      buildings[index].w,
-      height,
-      buildings[index].d
-    );
-    buildingMeshes[index].position.y = height / 2;
-  }
 });
 
 datePicker.value = `2026-12-21`;
